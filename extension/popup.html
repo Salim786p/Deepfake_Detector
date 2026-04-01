@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fake Content Detection Assistant</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup-shell">
+      <section class="hero">
+        <p class="eyebrow">Browser Extension</p>
+        <h1>Fake Content Detection Assistant</h1>
+        <p class="subtext">Right-click an image on any page, then open this popup to review the verdict.</p>
+      </section>
+
+      <section class="panel settings-panel">
+        <label for="backendUrl">Backend URL</label>
+        <div class="settings-row">
+          <input id="backendUrl" type="url" placeholder="http://127.0.0.1:8000" />
+          <button id="saveBackendButton" type="button">Save</button>
+        </div>
+        <p id="saveStatus" class="muted-text"></p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Latest Analysis</h2>
+          <span id="statusBadge" class="status-badge idle">idle</span>
+        </div>
+
+        <div id="emptyState" class="empty-state">
+          No image analyzed yet. Right-click any image and choose the analysis option.
+        </div>
+
+        <div id="resultContent" class="result-content hidden">
+          <img id="imagePreview" class="image-preview" alt="Analyzed source preview" />
+
+          <div class="metric-grid">
+            <article class="metric-card">
+              <span class="metric-label">Verdict</span>
+              <strong id="verdictText">-</strong>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Confidence</span>
+              <strong id="confidenceText">-</strong>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">AI-Generated</span>
+              <strong id="genaiText">-</strong>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Deepfake</span>
+              <strong id="deepfakeText">-</strong>
+            </article>
+          </div>
+
+          <section class="detail-block">
+            <h3>Summary</h3>
+            <p id="summaryText"></p>
+          </section>
+
+          <section class="detail-block">
+            <h3>Explanation</h3>
+            <p id="explanationText"></p>
+          </section>
+
+          <section class="detail-block">
+            <h3>Visual Signals</h3>
+            <ul id="signalsList" class="detail-list"></ul>
+          </section>
+
+          <section class="detail-block">
+            <h3>Authenticity Cues</h3>
+            <ul id="authenticityList" class="detail-list"></ul>
+          </section>
+
+          <section class="detail-block">
+            <h3>Recommendation</h3>
+            <p id="actionText"></p>
+          </section>
+
+          <button id="reanalyzeButton" class="full-width-button" type="button">Re-analyze last image</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
