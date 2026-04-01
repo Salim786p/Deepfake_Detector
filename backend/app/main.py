@@ -13,6 +13,7 @@ from app.services.image_service import (
     prepare_image,
 )
 from app.tools.gemini_vision_tool import GeminiVisionError
+from app.tools.huggingface_detector_tool import HuggingFaceDeepfakeError
 from app.tools.sightengine_tool import SightengineError
 
 
@@ -50,6 +51,11 @@ async def gemini_error_handler(_: Request, exc: GeminiVisionError):
     return _json_error(502, f"Gemini Vision error: {exc}")
 
 
+@app.exception_handler(HuggingFaceDeepfakeError)
+async def huggingface_error_handler(_: Request, exc: HuggingFaceDeepfakeError):
+    return _json_error(502, f"Hugging Face deepfake error: {exc}")
+
+
 @app.exception_handler(SightengineError)
 async def sightengine_error_handler(_: Request, exc: SightengineError):
     return _json_error(502, f"Sightengine error: {exc}")
@@ -85,9 +91,16 @@ async def analyze_url(payload: AnalyzeUrlRequest) -> AnalysisResponse:
             sightengine_mime_type=prepared.original_mime_type,
             vision_bytes=prepared.analysis_bytes,
             vision_mime_type=prepared.analysis_mime_type,
+            huggingface_bytes=prepared.analysis_bytes,
             filename=prepared.filename,
         )
-    except (HTTPException, ImagePreparationError, GeminiVisionError, SightengineError):
+    except (
+        HTTPException,
+        ImagePreparationError,
+        GeminiVisionError,
+        HuggingFaceDeepfakeError,
+        SightengineError,
+    ):
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Unexpected server error: {exc}") from exc
@@ -112,9 +125,16 @@ async def analyze_upload(file: UploadFile = File(...)) -> AnalysisResponse:
             sightengine_mime_type=prepared.original_mime_type,
             vision_bytes=prepared.analysis_bytes,
             vision_mime_type=prepared.analysis_mime_type,
+            huggingface_bytes=prepared.analysis_bytes,
             filename=prepared.filename,
         )
-    except (HTTPException, ImagePreparationError, GeminiVisionError, SightengineError):
+    except (
+        HTTPException,
+        ImagePreparationError,
+        GeminiVisionError,
+        HuggingFaceDeepfakeError,
+        SightengineError,
+    ):
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Unexpected server error: {exc}") from exc

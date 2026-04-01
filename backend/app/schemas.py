@@ -20,6 +20,7 @@ class VisionAnalysis(BaseModel):
     provider: str
     model: str
     summary: str
+    anomaly_score: float = Field(ge=0, le=1)
     manipulation_signals: List[str] = Field(default_factory=list)
     authenticity_cues: List[str] = Field(default_factory=list)
     explanation: str
@@ -40,6 +41,13 @@ class SightengineResult(BaseModel):
     metadata: ToolUsageMetadata
 
 
+class HuggingFaceDeepfakeResult(BaseModel):
+    fake_score: float
+    real_score: float
+    predicted_label: str
+    metadata: ToolUsageMetadata
+
+
 class AnalysisResponse(BaseModel):
     verdict: VerdictLabel
     confidence: int = Field(ge=0, le=100)
@@ -52,6 +60,7 @@ class AnalysisResponse(BaseModel):
     image_width: int
     image_height: int
     sightengine: SightengineResult
+    huggingface: HuggingFaceDeepfakeResult
     vision: VisionAnalysis
     completed_at: str
 

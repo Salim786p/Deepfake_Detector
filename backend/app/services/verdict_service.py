@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from app.schemas import AnalysisResponse, SightengineResult, VisionAnalysis
+from app.schemas import AnalysisResponse, HuggingFaceDeepfakeResult, SightengineResult, VisionAnalysis
 
 
 def _clamp_score(value: float) -> float:
@@ -25,31 +25,38 @@ def merge_verdict(
     image_width: int,
     image_height: int,
     sightengine_result: SightengineResult,
+    huggingface_result: HuggingFaceDeepfakeResult,
     vision_result: VisionAnalysis,
 ) -> AnalysisResponse:
     ai_generated = _clamp_score(sightengine_result.ai_generated_score)
     deepfake = _clamp_score(sightengine_result.deepfake_score)
-    strongest_signal = max(ai_generated, deepfake)
+    hf_fake = _clamp_score(huggingface_result.fake_score)
+    anomaly = _clamp_score(vision_result.anomaly_score)
+    strongest_signal = max(ai_generated, deepfake, hf_fake, anomaly)
+    combined_manipulation = (deepfake * 0.45) + (hf_fake * 0.35) + (anomaly * 0.20)
+    combined_synthetic = (ai_generated * 0.75) + (anomaly * 0.25)
 
-    if deepfake >= 0.75:
+    if combined_manipulation >= 0.72 or (hf_fake >= 0.78 and anomaly >= 0.55):
         verdict = "LIKELY_DEEPFAKE"
-        confidence = round(deepfake * 100)
-        summary = "Strong deepfake/manipulation signal detected."
-    elif ai_generated >= 0.75:
+        confidence = round(max(combined_manipulation, hf_fake, deepfake) * 100)
+        summary = "Strong manipulation or deepfake signal detected."
+    elif combined_synthetic >= 0.74:
         verdict = "LIKELY_AI_GENERATED"
-        confidence = round(ai_generated * 100)
+        confidence = round(max(combined_synthetic, ai_generated) * 100)
         summary = "Strong AI-generated image signal detected."
-    elif strongest_signal >= 0.45:
+    elif strongest_signal >= 0.42 or anomaly >= 0.5:
         verdict = "SUSPICIOUS"
         confidence = round(strongest_signal * 100)
-        summary = "The image shows moderate synthetic or manipulation risk signals."
+        summary = "The image shows visible anomalies or moderate synthetic/manipulation risk signals."
     else:
         verdict = "LIKELY_AUTHENTIC"
         confidence = round((1.0 - strongest_signal) * 100)
-        summary = "No strong synthetic or deepfake signal was detected."
+        summary = "No strong synthetic, deepfake, or visible anomaly signal was detected."
 
     evidence_lines = [
         f"Sightengine scores: AI-generated {round(ai_generated * 100)}%, deepfake {round(deepfake * 100)}%.",
+        f"Hugging Face deepfake score: fake {round(hf_fake * 100)}%, real {round(_clamp_score(huggingface_result.real_score) * 100)}%.",
+        f"Gemini visual anomaly score: {round(anomaly * 100)}%.",
     ]
 
     if vision_result.manipulation_signals:
@@ -79,6 +86,7 @@ def merge_verdict(
         image_width=image_width,
         image_height=image_height,
         sightengine=sightengine_result,
+        huggingface=huggingface_result,
         vision=vision_result,
         completed_at=datetime.now(timezone.utc).isoformat(),
     )

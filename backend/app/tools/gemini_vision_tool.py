@@ -31,12 +31,13 @@ async def analyze_with_gemini_vision(*, image_bytes: bytes, mime_type: str) -> V
     prompt = """
 You are assisting a fake-content detection system.
 
-Your job is NOT to decide whether the image is fake, AI-generated, or authentic.
-Instead, provide a concise visual analysis that can help explain an authenticity verdict generated elsewhere.
+Your job is NOT to make the final authenticity verdict.
+Instead, inspect the image for visible forensic cues that may suggest AI generation, manipulation, or authenticity.
 
 Return strict JSON with this schema:
 {
   "summary": "short one-sentence visual summary",
+  "anomaly_score": 0.0,
   "manipulation_signals": ["signal 1", "signal 2"],
   "authenticity_cues": ["cue 1", "cue 2"],
   "explanation": "2-4 sentence explanation focused on visible image cues only",
@@ -45,6 +46,13 @@ Return strict JSON with this schema:
 
 Rules:
 - Base your answer only on visible image characteristics.
+- Pay special attention to facial anatomy and synthesis artifacts: eyes, pupils, teeth, ears, nostrils, hairline, fingers, skin blending, boundary seams, warped backgrounds, lighting inconsistencies, duplicated details, and asymmetric geometry.
+- If obvious distortions are present, include them in manipulation_signals.
+- Set anomaly_score between 0 and 1 based only on visible anomalies:
+  - 0.0 to 0.2 = little to no visible anomaly
+  - 0.3 to 0.5 = mild suspicious artifacts
+  - 0.6 to 0.8 = strong visible anomalies
+  - 0.9 to 1.0 = severe visual inconsistencies
 - Do not identify people.
 - Do not claim certainty about authenticity.
 - If evidence is weak, say so.
@@ -102,6 +110,7 @@ Rules:
         provider="Gemini",
         model=settings.gemini_model,
         summary=str(parsed.get("summary", "")).strip() or "Visual review completed.",
+        anomaly_score=max(0.0, min(1.0, float(parsed.get("anomaly_score", 0.0) or 0.0))),
         manipulation_signals=[str(item).strip() for item in parsed.get("manipulation_signals", []) if str(item).strip()],
         authenticity_cues=[str(item).strip() for item in parsed.get("authenticity_cues", []) if str(item).strip()],
         explanation=str(parsed.get("explanation", "")).strip()

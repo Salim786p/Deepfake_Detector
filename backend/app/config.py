@@ -14,6 +14,7 @@ class Settings(BaseSettings):
 
     gemini_api_key: str = Field(..., alias="GEMINI_API_KEY")
     gemini_model: str = "gemini-2.5-flash"
+    huggingface_deepfake_model: str = "prithivMLmods/Deepfake-Detect-Siglip2"
 
     sightengine_user: str = Field(..., alias="SIGHTENGINE_USER")
     sightengine_secret: str = Field(..., alias="SIGHTENGINE_SECRET")

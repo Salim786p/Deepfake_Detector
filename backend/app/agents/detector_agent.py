@@ -18,6 +18,7 @@ class FakeContentDetectorAgent:
         sightengine_mime_type: str,
         vision_bytes: bytes,
         vision_mime_type: str,
+        huggingface_bytes: bytes,
         filename: str,
     ) -> AnalysisResponse:
         result = await self._graph.ainvoke(
@@ -31,6 +32,7 @@ class FakeContentDetectorAgent:
                 "sightengine_mime_type": sightengine_mime_type,
                 "vision_bytes": vision_bytes,
                 "vision_mime_type": vision_mime_type,
+                "huggingface_bytes": huggingface_bytes,
                 "filename": filename,
             }
         )
